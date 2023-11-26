@@ -1,0 +1,233 @@
+// Models
+import UserModel from '@/models/user.model';
+
+/**
+ * login
+ *
+ * @param {*} username
+ * @param {*} password
+ * @returns {object}
+ */
+const login = async (username, password) => {
+  const user = await UserModel.findOne({
+    $or: [
+      {
+        email: username
+      },
+      {
+        phone: username
+      }
+    ]
+  })
+    .select('+password')
+    .lean();
+
+  if (user) {
+    if (user.deleted)
+      throw {
+        code: 'ERROR_LOGIN_1',
+        message: `The user has been banned`
+      };
+    if (!user.password)
+      throw {
+        code: 'ERROR_LOGIN_2',
+        message: `Don't have a password, try in recover password`
+      };
+    const isMatch = await UserModel.compare(password, user.password);
+    if (!isMatch)
+      throw {
+        code: 'ERROR_LOGIN_3',
+        message: `Incorrect password`
+      };
+    return user;
+  } else {
+    throw {
+      code: 'ERROR_LOGIN_4',
+      message: `User not found`
+    };
+  }
+};
+
+/**
+ *
+ * register
+ *
+ * @param {*} username
+ * @param {*} password
+ * @returns {object}
+ */
+const register = async (firstName, lastName, username, password, terms) => {
+  const code = Math.floor(1000 + Math.random() * 9000);
+  const exists = await UserModel.exists({
+    $or: [
+      {
+        email: username
+      },
+      {
+        phone: username
+      }
+    ]
+  });
+
+  if (exists) {
+    throw {
+      code: 'ERROR_REGISTER_1',
+      message: `${username} is already registered`,
+      params: { username }
+    };
+  } else {
+    const query = {};
+
+    if (username.includes('@')) {
+      query.email = username;
+    } else {
+      query.phone = username;
+    }
+    const user = await UserModel.create({
+      ...query,
+      firstName,
+      lastName,
+      password,
+      check_terms: terms,
+      codeVerification: code
+    });
+
+    // Send Code
+    if (username.includes('@')) {
+      // sendEmail({
+      //   to: username,
+      //   from: "hi@nodetomic.com",
+      //   subject: "Nodetomic: bienvenido",
+      //   message: `Código: ${code}`,
+      //   template: "register",
+      //   params: {
+      //     code,
+      //   },
+      // });
+    } else {
+      // sendSMS({
+      //   to: username,
+      //   from: "Nodetomic",
+      //   message: `Nodetomic: ${code}`,
+      // });
+    }
+
+    // relate to other collections
+    // user.page = page
+    // const created = await user.save()
+
+    return user;
+  }
+};
+
+/**
+ * recover
+ *
+ * @param {*} email
+ * @returns {object}
+ */
+const recover = async (username) => {
+  const code = Math.floor(1000 + Math.random() * 9000);
+
+  const user = await UserModel.findOne({
+    $or: [
+      {
+        email: username
+      },
+      {
+        phone: username
+      }
+    ],
+    deleted: null
+  }).lean();
+
+  if (user) {
+    // Send code here via Email
+    await UserModel.updateOne({ _id: user._id }, { codeVerification: code });
+
+    if (username.includes('@')) {
+      // sendEmail({
+      //   to: username,
+      //   from: "hi@nodetomic.com",
+      //   subject: "Nodetomic: recuperar cuenta",
+      //   message: `Nodetomic: ${code}`,
+      //   template: "recover",
+      //   params: {
+      //     code,
+      //   },
+      // });
+    } else {
+      // sendSMS({
+      //   to: username,
+      //   from: "Nodetomic",
+      //   message: `Nodetomic: ${code}`,
+      // });
+    }
+
+    return {
+      sent: `Sent code to ${username}`
+    };
+  } else {
+    throw {
+      code: 'ERROR_RECOVER_1',
+      message: `${username} is not registered`,
+      params: { username }
+    };
+  }
+};
+
+/**
+ * me
+ *
+ * @param {*} userId
+ * @returns {object}
+ */
+const me = async (userId) => {
+  return await UserModel.findOne({ _id: userId, deleted: null })
+    .select('phone email firstName lastName created')
+    .lean();
+};
+
+/**
+ * verify
+ *
+ * @param {*} username
+ * @param {*} code
+ * @returns {object}
+ */
+const verify = async (username, code) => {
+  const user = await UserModel.findOne({
+    $or: [
+      {
+        email: username
+      },
+      {
+        phone: username
+      }
+    ],
+    codeVerification: code,
+    deleted: null
+  }).lean();
+
+  if (user) {
+    return await UserModel.findOneAndUpdate(
+      { _id: user._id },
+      { codeVerification: null },
+      { new: true }
+    );
+  } else {
+    throw {
+      code: 'ERROR_VERIFY_1',
+      message: `Invalid code`,
+      params: { code }
+    };
+  }
+};
+
+export default {
+  login,
+  register,
+  recover,
+  me,
+  verify
+};
