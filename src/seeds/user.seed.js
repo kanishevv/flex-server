@@ -17,7 +17,17 @@ const data = [
     parameters: {
       theme: 'dark'
     },
-    permissions: ['user']
+    permissions: [
+      'user',
+      'channels_list',
+      'channels_create',
+      'channels_delete',
+      'projects_list',
+      'projects_create',
+      'projects_view',
+      'projects_update',
+      'projects_delete'
+    ]
   }
 ];
 

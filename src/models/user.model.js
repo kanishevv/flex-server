@@ -26,7 +26,17 @@ const schema = new Schema({
   },
   permissions: {
     type: Array,
-    default: ['user']
+    default: [
+      'user',
+      'channels_list',
+      'channels_create',
+      'channels_delete',
+      'projects_list',
+      'projects_create',
+      'projects_view',
+      'projects_update',
+      'projects_delete'
+    ]
   },
   codeVerification: {
     type: String,
