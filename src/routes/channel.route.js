@@ -26,6 +26,16 @@ router.get('/api/channels', /*mw(['channels_list']),*/ ChannelController.list);
 router.post('/api/channels', mw(['channels_create']), ChannelController.create);
 
 /**
+ * GET /api/channels/:id
+ * @summary Channel view
+ * @tags Channels
+ * @param {id'} '/api/channels
+ * @return {object} 200 - Success
+ * @return {object} 5XX - Error
+ */
+router.get('/api/channels/:id', ChannelController.view);
+
+/**
  * DELETE /api/channels/:id
  * @summary Channel remove
  * @tags Channels

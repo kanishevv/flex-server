@@ -52,6 +52,31 @@ const create = async (req, res) => {
 };
 
 /**
+ * View channel
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns {object}
+ */
+const view = async (req, res) => {
+  try {
+    // Get current page id from params
+    const filter = {
+      _id: req.params.id
+    };
+
+    // Business logic
+    const result = await SiteBusiness.view(filter);
+    console.log(result);
+    // Return success
+    return success(res, 200, result);
+  } catch (err) {
+    // Return error (if any)
+    error(res, err);
+  }
+};
+
+/**
  * Remove site
  * @param {number} req
  * @param {object} res
@@ -78,5 +103,6 @@ const remove = async (req, res) => {
 export default {
   list,
   create,
+  view,
   remove
 };

@@ -35,6 +35,16 @@ const create = async (data) => {
 };
 
 /**
+ * View channel
+ *
+ * @param {object} filter
+ * @returns {object}
+ */
+const view = async (filter) => {
+  return await SiteModel.findOne(filter).populate('pages', 'name home status');
+};
+
+/**
  * Remove site
  * @param {string} id
  * @returns {boolean}
@@ -48,5 +58,6 @@ const remove = async (id) => {
 export default {
   list,
   create,
+  view,
   remove
 };
